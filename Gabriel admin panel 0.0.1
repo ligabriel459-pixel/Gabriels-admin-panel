@@ -1,7 +1,13 @@
--- ServerScriptService > CreateTitleEvent.server.lua
+-- ONE SCRIPT INSTALLER
+-- Put this in ServerScriptService
 
 local rs = game:GetService("ReplicatedStorage")
+local sss = game:GetService("ServerScriptService")
+local sps = game:GetService("StarterPlayer").StarterPlayerScripts
 
+----------------------------------------------------
+-- CREATE REMOTEEVENT
+----------------------------------------------------
 local event = rs:FindFirstChild("CreateTitle")
 if not event then
     event = Instance.new("RemoteEvent")
@@ -9,8 +15,13 @@ if not event then
     event.Parent = rs
 end
 
--- ServerScriptService > TitleBillboard.server.lua
+----------------------------------------------------
+-- CREATE SERVER BILLBOARD SCRIPT
+----------------------------------------------------
+local serverScript = Instance.new("Script")
+serverScript.Name = "TitleBillboard_Server"
 
+serverScript.Source = [[
 local rs = game:GetService("ReplicatedStorage")
 local event = rs:WaitForChild("CreateTitle")
 local runService = game:GetService("RunService")
@@ -22,21 +33,18 @@ event.OnServerEvent:Connect(function(player, titleText, color)
     local head = char:FindFirstChild("Head")
     if not head then return end
 
-    -- remove old
     if char:FindFirstChild("ServerTitlePart") then
         char.ServerTitlePart:Destroy()
     end
 
-    -- part above head
     local part = Instance.new("Part")
     part.Name = "ServerTitlePart"
-    part.Size = Vector3.new(1, 1, 1)
+    part.Size = Vector3.new(1,1,1)
     part.Transparency = 1
     part.CanCollide = false
     part.Anchored = true
     part.Parent = char
 
-    -- billboard
     local billboard = Instance.new("BillboardGui")
     billboard.Size = UDim2.new(0, 200, 0, 50)
     billboard.AlwaysOnTop = true
@@ -44,7 +52,7 @@ event.OnServerEvent:Connect(function(player, titleText, color)
     billboard.Parent = part
 
     local text = Instance.new("TextLabel")
-    text.Size = UDim2.new(1, 0, 1, 0)
+    text.Size = UDim2.new(1,0,1,0)
     text.BackgroundTransparency = 1
     text.TextScaled = true
     text.Font = Enum.Font.GothamBold
@@ -52,7 +60,6 @@ event.OnServerEvent:Connect(function(player, titleText, color)
     text.TextColor3 = color
     text.Parent = billboard
 
-    -- follow head
     local conn
     conn = runService.Heartbeat:Connect(function()
         if not char.Parent or not head.Parent or not part.Parent then
@@ -62,9 +69,17 @@ event.OnServerEvent:Connect(function(player, titleText, color)
         part.CFrame = head.CFrame * CFrame.new(0, 2.5, 0)
     end)
 end)
+]]
 
--- StarterPlayerScripts > AdminPanel.client.lua
+serverScript.Parent = sss
 
+----------------------------------------------------
+-- CREATE LOCAL ADMIN PANEL SCRIPT
+----------------------------------------------------
+local localScript = Instance.new("LocalScript")
+localScript.Name = "AdminPanel_Client"
+
+localScript.Source = [[
 local player = game.Players.LocalPlayer
 local rs = game:GetService("ReplicatedStorage")
 local createTitleEvent = rs:WaitForChild("CreateTitle")
@@ -73,10 +88,6 @@ local UIS = game:GetService("UserInputService")
 local gui = Instance.new("ScreenGui")
 gui.Parent = player:WaitForChild("PlayerGui")
 gui.ResetOnSpawn = false
-
-----------------------------------------------------
--- ADMIN KEY GUI
-----------------------------------------------------
 
 local frame = Instance.new("Frame")
 frame.Size = UDim2.new(0, 300, 0, 160)
@@ -125,10 +136,6 @@ wrong.Font = Enum.Font.GothamBold
 wrong.Visible = false
 wrong.Parent = frame
 
-----------------------------------------------------
--- OPEN PANEL BUTTON
-----------------------------------------------------
-
 local openPanelBtn = Instance.new("TextButton")
 openPanelBtn.Size = UDim2.new(0, 200, 0, 50)
 openPanelBtn.Position = UDim2.new(0.5, -100, 0.8, 0)
@@ -139,10 +146,6 @@ openPanelBtn.Font = Enum.Font.GothamBold
 openPanelBtn.TextScaled = true
 openPanelBtn.Visible = false
 openPanelBtn.Parent = gui
-
-----------------------------------------------------
--- ADMIN PANEL
-----------------------------------------------------
 
 local panel = Instance.new("Frame")
 panel.Size = UDim2.new(0, 300, 0, 250)
@@ -170,10 +173,6 @@ closeBtn.Text = "Close"
 closeBtn.TextScaled = true
 closeBtn.Font = Enum.Font.GothamBold
 closeBtn.Parent = panel
-
-----------------------------------------------------
--- RGB SLIDERS
-----------------------------------------------------
 
 local function createSlider(name, yPos)
     local label = Instance.new("TextLabel")
@@ -242,22 +241,13 @@ UIS.InputChanged:Connect(function(input)
 
         local color = Color3.fromRGB(r, g, b)
 
-        -- send to server so everyone sees updated color
         createTitleEvent:FireServer(panelTitle.Text, color)
     end
 end)
 
-----------------------------------------------------
--- LIVE TITLE UPDATE -> SERVER
-----------------------------------------------------
-
 panelTitle:GetPropertyChangedSignal("Text"):Connect(function()
     createTitleEvent:FireServer(panelTitle.Text, panelTitle.TextColor3)
 end)
-
-----------------------------------------------------
--- BUTTON LOGIC
-----------------------------------------------------
 
 openPanelBtn.MouseButton1Click:Connect(function()
     panel.Visible = true
@@ -266,10 +256,6 @@ end)
 closeBtn.MouseButton1Click:Connect(function()
     panel.Visible = false
 end)
-
-----------------------------------------------------
--- PASSWORD LOGIC
-----------------------------------------------------
 
 enterBtn.MouseButton1Click:Connect(function()
     if box.Text == "Galaxy454" then
@@ -283,7 +269,6 @@ enterBtn.MouseButton1Click:Connect(function()
         frame:Destroy()
         openPanelBtn.Visible = true
 
-        -- create initial title on server
         createTitleEvent:FireServer(panelTitle.Text, panelTitle.TextColor3)
     else
         wrong.Visible = true
@@ -291,3 +276,8 @@ enterBtn.MouseButton1Click:Connect(function()
         wrong.Visible = false
     end
 end)
+]]
+
+localScript.Parent = sps
+
+print("Admin Panel + Billboard System Installed Successfully!")
