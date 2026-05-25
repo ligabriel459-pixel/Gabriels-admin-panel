@@ -80,13 +80,14 @@ panel.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 panel.Visible = false
 panel.Parent = gui
 
-local panelTitle = Instance.new("TextLabel")
+local panelTitle = Instance.new("TextBox")
 panelTitle.Size = UDim2.new(1, 0, 0, 40)
 panelTitle.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 panelTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
 panelTitle.Text = "Admin Title"
 panelTitle.TextScaled = true
 panelTitle.Font = Enum.Font.GothamBold
+panelTitle.ClearTextOnFocus = false
 panelTitle.Parent = panel
 
 local closeBtn = Instance.new("TextButton")
