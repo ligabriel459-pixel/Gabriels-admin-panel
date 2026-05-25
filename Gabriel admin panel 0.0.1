@@ -1,78 +1,78 @@
-local player = game.Players.LocalPlayer
-local gui = Instance.new("ScreenGui")
-gui.Parent = player:WaitForChild("PlayerGui")
-gui.ResetOnSpawn = false
+-- ServerScriptService > CreateTitleEvent.server.lua
 
-----------------------------------------------------
--- FUNCTION: CREATE BILLBOARD ABOVE HEAD (REAL FIX)
-----------------------------------------------------
+local rs = game:GetService("ReplicatedStorage")
 
-local function createBillboard()
-    local char = player.Character or player.CharacterAdded:Wait()
+local event = rs:FindFirstChild("CreateTitle")
+if not event then
+    event = Instance.new("RemoteEvent")
+    event.Name = "CreateTitle"
+    event.Parent = rs
+end
 
-    -- FIND REAL HEAD (fix for executors)
-    local head = nil
-    for _, v in ipairs(char:GetChildren()) do
-        if v:IsA("BasePart") and v.Name == "Head" then
-            head = v
-        end
+-- ServerScriptService > TitleBillboard.server.lua
+
+local rs = game:GetService("ReplicatedStorage")
+local event = rs:WaitForChild("CreateTitle")
+local runService = game:GetService("RunService")
+
+event.OnServerEvent:Connect(function(player, titleText, color)
+    local char = player.Character
+    if not char then return end
+
+    local head = char:FindFirstChild("Head")
+    if not head then return end
+
+    -- remove old
+    if char:FindFirstChild("ServerTitlePart") then
+        char.ServerTitlePart:Destroy()
     end
 
-    -- If executor returns fake head, retry
-    if not head then
-        task.wait(0.5)
-        return createBillboard()
-    end
+    -- part above head
+    local part = Instance.new("Part")
+    part.Name = "ServerTitlePart"
+    part.Size = Vector3.new(1, 1, 1)
+    part.Transparency = 1
+    part.CanCollide = false
+    part.Anchored = true
+    part.Parent = char
 
-    -- Remove old billboard
-    if char:FindFirstChild("TitlePart") then
-        char.TitlePart:Destroy()
-    end
-
-    -- Create invisible anchored part
-    local headPart = Instance.new("Part")
-    headPart.Name = "TitlePart"
-    headPart.Size = Vector3.new(1, 1, 1)
-    headPart.Transparency = 1
-    headPart.CanCollide = false
-    headPart.Anchored = true
-    headPart.Parent = char
-
-    -- Billboard GUI
+    -- billboard
     local billboard = Instance.new("BillboardGui")
-    billboard.Name = "TitleBillboard"
     billboard.Size = UDim2.new(0, 200, 0, 50)
     billboard.AlwaysOnTop = true
-    billboard.Adornee = headPart
-    billboard.Parent = headPart
+    billboard.Adornee = part
+    billboard.Parent = part
 
     local text = Instance.new("TextLabel")
     text.Size = UDim2.new(1, 0, 1, 0)
     text.BackgroundTransparency = 1
-    text.Text = "Admin Title"
     text.TextScaled = true
     text.Font = Enum.Font.GothamBold
-    text.TextColor3 = Color3.fromRGB(255, 255, 255)
+    text.Text = titleText
+    text.TextColor3 = color
     text.Parent = billboard
 
-    -- FOLLOW HEAD EVERY FRAME (GUARANTEED FIX)
-    game:GetService("RunService").RenderStepped:Connect(function()
-        if head and headPart then
-            headPart.CFrame = head.CFrame * CFrame.new(0, 2.5, 0)
+    -- follow head
+    local conn
+    conn = runService.Heartbeat:Connect(function()
+        if not char.Parent or not head.Parent or not part.Parent then
+            conn:Disconnect()
+            return
         end
+        part.CFrame = head.CFrame * CFrame.new(0, 2.5, 0)
     end)
-
-    return text
-end
-
--- Create billboard on spawn
-local billboardText = createBillboard()
-
--- Recreate billboard on respawn
-player.CharacterAdded:Connect(function()
-    task.wait(1)
-    billboardText = createBillboard()
 end)
+
+-- StarterPlayerScripts > AdminPanel.client.lua
+
+local player = game.Players.LocalPlayer
+local rs = game:GetService("ReplicatedStorage")
+local createTitleEvent = rs:WaitForChild("CreateTitle")
+local UIS = game:GetService("UserInputService")
+
+local gui = Instance.new("ScreenGui")
+gui.Parent = player:WaitForChild("PlayerGui")
+gui.ResetOnSpawn = false
 
 ----------------------------------------------------
 -- ADMIN KEY GUI
@@ -205,7 +205,6 @@ local rLabel, rBg, rBtn = createSlider("Red", 60)
 local gLabel, gBg, gBtn = createSlider("Green", 120)
 local bLabel, bBg, bBtn = createSlider("Blue", 180)
 
-local UIS = game:GetService("UserInputService")
 local dragging = nil
 
 local function sliderLogic(btn, bg, label)
@@ -241,16 +240,19 @@ UIS.InputChanged:Connect(function(input)
         local g = tonumber(gLabel.Text:split(": ")[2])
         local b = tonumber(bLabel.Text:split(": ")[2])
 
-        billboardText.TextColor3 = Color3.fromRGB(r, g, b)
+        local color = Color3.fromRGB(r, g, b)
+
+        -- send to server so everyone sees updated color
+        createTitleEvent:FireServer(panelTitle.Text, color)
     end
 end)
 
 ----------------------------------------------------
--- LIVE TITLE UPDATE
+-- LIVE TITLE UPDATE -> SERVER
 ----------------------------------------------------
 
 panelTitle:GetPropertyChangedSignal("Text"):Connect(function()
-    billboardText.Text = panelTitle.Text
+    createTitleEvent:FireServer(panelTitle.Text, panelTitle.TextColor3)
 end)
 
 ----------------------------------------------------
@@ -280,6 +282,9 @@ enterBtn.MouseButton1Click:Connect(function()
         end
         frame:Destroy()
         openPanelBtn.Visible = true
+
+        -- create initial title on server
+        createTitleEvent:FireServer(panelTitle.Text, panelTitle.TextColor3)
     else
         wrong.Visible = true
         task.wait(2)
