@@ -1,10 +1,68 @@
 local player = game.Players.LocalPlayer
-local char = player.Character or player.CharacterAdded:Wait()
-local head = char:WaitForChild("Head")
-
 local gui = Instance.new("ScreenGui")
 gui.Parent = player:WaitForChild("PlayerGui")
 gui.ResetOnSpawn = false
+
+----------------------------------------------------
+-- FUNCTION: CREATE BILLBOARD ABOVE HEAD
+----------------------------------------------------
+
+local function createBillboard()
+    local char = player.Character or player.CharacterAdded:Wait()
+    local head = char:WaitForChild("Head")
+
+    -- Remove old billboard if it exists
+    if char:FindFirstChild("TitlePart") then
+        char.TitlePart:Destroy()
+    end
+
+    -- Create invisible part above head
+    local headPart = Instance.new("Part")
+    headPart.Name = "TitlePart"
+    headPart.Size = Vector3.new(1, 1, 1)
+    headPart.Transparency = 1
+    headPart.CanCollide = false
+    headPart.Anchored = false
+    headPart.Parent = char
+
+    -- Weld to head
+    local weld = Instance.new("WeldConstraint")
+    weld.Part0 = head
+    weld.Part1 = headPart
+    weld.Parent = headPart
+
+    -- Position above head
+    headPart.CFrame = head.CFrame * CFrame.new(0, 1.5, 0)
+
+    -- Billboard GUI
+    local billboard = Instance.new("BillboardGui")
+    billboard.Name = "TitleBillboard"
+    billboard.Size = UDim2.new(0, 200, 0, 50)
+    billboard.AlwaysOnTop = true
+    billboard.Adornee = headPart
+    billboard.Parent = headPart
+
+    -- Text
+    local text = Instance.new("TextLabel")
+    text.Size = UDim2.new(1, 0, 1, 0)
+    text.BackgroundTransparency = 1
+    text.Text = "Admin Title"
+    text.TextScaled = true
+    text.Font = Enum.Font.GothamBold
+    text.TextColor3 = Color3.fromRGB(255, 255, 255)
+    text.Parent = billboard
+
+    return text
+end
+
+-- Create billboard on spawn
+local billboardText = createBillboard()
+
+-- Recreate billboard on respawn
+player.CharacterAdded:Connect(function()
+    task.wait(1)
+    billboardText = createBillboard()
+end)
 
 ----------------------------------------------------
 -- ADMIN KEY GUI
@@ -104,39 +162,6 @@ closeBtn.Font = Enum.Font.GothamBold
 closeBtn.Parent = panel
 
 ----------------------------------------------------
--- INVISIBLE PART ABOVE HEAD + BILLBOARD
-----------------------------------------------------
-
-local headPart = Instance.new("Part")
-headPart.Size = Vector3.new(1, 1, 1)
-headPart.Transparency = 1
-headPart.CanCollide = false
-headPart.Anchored = false
-headPart.Parent = char
-
-local weld = Instance.new("WeldConstraint")
-weld.Part0 = head
-weld.Part1 = headPart
-weld.Parent = headPart
-
-headPart.CFrame = head.CFrame * CFrame.new(0, 1.5, 0)
-
-local billboard = Instance.new("BillboardGui")
-billboard.Size = UDim2.new(0, 200, 0, 50)
-billboard.Adornee = headPart
-billboard.AlwaysOnTop = true
-billboard.Parent = headPart
-
-local billboardText = Instance.new("TextLabel")
-billboardText.Size = UDim2.new(1, 0, 1, 0)
-billboardText.BackgroundTransparency = 1
-billboardText.Text = panelTitle.Text
-billboardText.TextScaled = true
-billboardText.Font = Enum.Font.GothamBold
-billboardText.TextColor3 = Color3.fromRGB(255, 255, 255)
-billboardText.Parent = billboard
-
-----------------------------------------------------
 -- RGB SLIDERS
 ----------------------------------------------------
 
@@ -173,17 +198,17 @@ local bLabel, bBg, bBtn = createSlider("Blue", 180)
 local UIS = game:GetService("UserInputService")
 local dragging = nil
 
-local function sliderLogic(btn, bg, label, colorIndex)
+local function sliderLogic(btn, bg, label)
     btn.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = {btn = btn, bg = bg, label = label, index = colorIndex}
+            dragging = {btn = btn, bg = bg, label = label}
         end
     end)
 end
 
-sliderLogic(rBtn, rBg, rLabel, 1)
-sliderLogic(gBtn, gBg, gLabel, 2)
-sliderLogic(bBtn, bBg, bLabel, 3)
+sliderLogic(rBtn, rBg, rLabel)
+sliderLogic(gBtn, gBg, gLabel)
+sliderLogic(bBtn, bBg, bLabel)
 
 UIS.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
