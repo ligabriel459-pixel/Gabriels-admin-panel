@@ -4,7 +4,7 @@ gui.Parent = player:WaitForChild("PlayerGui")
 gui.ResetOnSpawn = false
 
 ----------------------------------------------------
--- FUNCTION: CREATE BILLBOARD ABOVE HEAD
+-- FUNCTION: CREATE BILLBOARD ABOVE HEAD (FIXED)
 ----------------------------------------------------
 
 local function createBillboard()
@@ -16,23 +16,14 @@ local function createBillboard()
         char.TitlePart:Destroy()
     end
 
-    -- Create invisible part above head
+    -- Create invisible anchored part
     local headPart = Instance.new("Part")
     headPart.Name = "TitlePart"
     headPart.Size = Vector3.new(1, 1, 1)
     headPart.Transparency = 1
     headPart.CanCollide = false
-    headPart.Anchored = false
+    headPart.Anchored = true
     headPart.Parent = char
-
-    -- Weld to head
-    local weld = Instance.new("WeldConstraint")
-    weld.Part0 = head
-    weld.Part1 = headPart
-    weld.Parent = headPart
-
-    -- Position above head
-    headPart.CFrame = head.CFrame * CFrame.new(0, 1.5, 0)
 
     -- Billboard GUI
     local billboard = Instance.new("BillboardGui")
@@ -42,7 +33,6 @@ local function createBillboard()
     billboard.Adornee = headPart
     billboard.Parent = headPart
 
-    -- Text
     local text = Instance.new("TextLabel")
     text.Size = UDim2.new(1, 0, 1, 0)
     text.BackgroundTransparency = 1
@@ -51,6 +41,13 @@ local function createBillboard()
     text.Font = Enum.Font.GothamBold
     text.TextColor3 = Color3.fromRGB(255, 255, 255)
     text.Parent = billboard
+
+    -- FORCE FOLLOW HEAD EVERY FRAME (THE FIX)
+    game:GetService("RunService").RenderStepped:Connect(function()
+        if head and headPart then
+            headPart.CFrame = head.CFrame * CFrame.new(0, 2.5, 0)
+        end
+    end)
 
     return text
 end
