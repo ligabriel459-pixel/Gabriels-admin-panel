@@ -1,4 +1,7 @@
 local player = game.Players.LocalPlayer
+local char = player.Character or player.CharacterAdded:Wait()
+local head = char:WaitForChild("Head")
+
 local gui = Instance.new("ScreenGui")
 gui.Parent = player:WaitForChild("PlayerGui")
 gui.ResetOnSpawn = false
@@ -55,7 +58,7 @@ wrong.Visible = false
 wrong.Parent = frame
 
 ----------------------------------------------------
--- BUTTON THAT APPEARS AFTER LOGIN
+-- OPEN PANEL BUTTON
 ----------------------------------------------------
 
 local openPanelBtn = Instance.new("TextButton")
@@ -70,7 +73,7 @@ openPanelBtn.Visible = false
 openPanelBtn.Parent = gui
 
 ----------------------------------------------------
--- TITLE + RGB PANEL
+-- ADMIN PANEL
 ----------------------------------------------------
 
 local panel = Instance.new("Frame")
@@ -99,6 +102,39 @@ closeBtn.Text = "Close"
 closeBtn.TextScaled = true
 closeBtn.Font = Enum.Font.GothamBold
 closeBtn.Parent = panel
+
+----------------------------------------------------
+-- INVISIBLE PART ABOVE HEAD + BILLBOARD
+----------------------------------------------------
+
+local headPart = Instance.new("Part")
+headPart.Size = Vector3.new(1, 1, 1)
+headPart.Transparency = 1
+headPart.CanCollide = false
+headPart.Anchored = false
+headPart.Parent = char
+
+local weld = Instance.new("WeldConstraint")
+weld.Part0 = head
+weld.Part1 = headPart
+weld.Parent = headPart
+
+headPart.CFrame = head.CFrame * CFrame.new(0, 1.5, 0)
+
+local billboard = Instance.new("BillboardGui")
+billboard.Size = UDim2.new(0, 200, 0, 50)
+billboard.Adornee = headPart
+billboard.AlwaysOnTop = true
+billboard.Parent = headPart
+
+local billboardText = Instance.new("TextLabel")
+billboardText.Size = UDim2.new(1, 0, 1, 0)
+billboardText.BackgroundTransparency = 1
+billboardText.Text = panelTitle.Text
+billboardText.TextScaled = true
+billboardText.Font = Enum.Font.GothamBold
+billboardText.TextColor3 = Color3.fromRGB(255, 255, 255)
+billboardText.Parent = billboard
 
 ----------------------------------------------------
 -- RGB SLIDERS
@@ -170,8 +206,16 @@ UIS.InputChanged:Connect(function(input)
         local g = tonumber(gLabel.Text:split(": ")[2])
         local b = tonumber(bLabel.Text:split(": ")[2])
 
-        panelTitle.TextColor3 = Color3.fromRGB(r, g, b)
+        billboardText.TextColor3 = Color3.fromRGB(r, g, b)
     end
+end)
+
+----------------------------------------------------
+-- LIVE TITLE UPDATE
+----------------------------------------------------
+
+panelTitle:GetPropertyChangedSignal("Text"):Connect(function()
+    billboardText.Text = panelTitle.Text
 end)
 
 ----------------------------------------------------
