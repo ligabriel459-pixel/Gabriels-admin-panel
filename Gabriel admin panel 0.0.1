@@ -1,0 +1,208 @@
+local player = game.Players.LocalPlayer
+local gui = Instance.new("ScreenGui")
+gui.Parent = player:WaitForChild("PlayerGui")
+gui.ResetOnSpawn = false
+
+----------------------------------------------------
+-- ADMIN KEY GUI
+----------------------------------------------------
+
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 300, 0, 160)
+frame.Position = UDim2.new(0.5, -150, 0.5, -80)
+frame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+frame.Parent = gui
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, 0, 0, 40)
+title.BackgroundTransparency = 1
+title.Text = "Enter admin key"
+title.TextScaled = true
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.Font = Enum.Font.GothamBold
+title.Parent = frame
+
+local box = Instance.new("TextBox")
+box.Size = UDim2.new(1, -40, 0, 40)
+box.Position = UDim2.new(0, 20, 0, 50)
+box.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+box.TextColor3 = Color3.fromRGB(255, 255, 255)
+box.PlaceholderText = "Enter key"
+box.Text = ""
+box.TextScaled = true
+box.Font = Enum.Font.Gotham
+box.Parent = frame
+
+local enterBtn = Instance.new("TextButton")
+enterBtn.Size = UDim2.new(1, -40, 0, 40)
+enterBtn.Position = UDim2.new(0, 20, 0, 100)
+enterBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
+enterBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+enterBtn.Text = "Enter"
+enterBtn.TextScaled = true
+enterBtn.Font = Enum.Font.GothamBold
+enterBtn.Parent = frame
+
+local wrong = Instance.new("TextLabel")
+wrong.Size = UDim2.new(1, 0, 0, 30)
+wrong.Position = UDim2.new(0, 0, 1, 0)
+wrong.BackgroundTransparency = 1
+wrong.Text = "Wrong password"
+wrong.TextScaled = true
+wrong.TextColor3 = Color3.fromRGB(255, 0, 0)
+wrong.Font = Enum.Font.GothamBold
+wrong.Visible = false
+wrong.Parent = frame
+
+----------------------------------------------------
+-- BUTTON THAT APPEARS AFTER LOGIN
+----------------------------------------------------
+
+local openPanelBtn = Instance.new("TextButton")
+openPanelBtn.Size = UDim2.new(0, 200, 0, 50)
+openPanelBtn.Position = UDim2.new(0.5, -100, 0.8, 0)
+openPanelBtn.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+openPanelBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+openPanelBtn.Text = "Open Admin Panel"
+openPanelBtn.Font = Enum.Font.GothamBold
+openPanelBtn.TextScaled = true
+openPanelBtn.Visible = false
+openPanelBtn.Parent = gui
+
+----------------------------------------------------
+-- TITLE + RGB PANEL
+----------------------------------------------------
+
+local panel = Instance.new("Frame")
+panel.Size = UDim2.new(0, 300, 0, 250)
+panel.Position = UDim2.new(0.5, -150, 0.5, -125)
+panel.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+panel.Visible = false
+panel.Parent = gui
+
+local panelTitle = Instance.new("TextLabel")
+panelTitle.Size = UDim2.new(1, 0, 0, 40)
+panelTitle.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+panelTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+panelTitle.Text = "Admin Title"
+panelTitle.TextScaled = true
+panelTitle.Font = Enum.Font.GothamBold
+panelTitle.Parent = panel
+
+local closeBtn = Instance.new("TextButton")
+closeBtn.Size = UDim2.new(0, 80, 0, 30)
+closeBtn.Position = UDim2.new(1, -90, 0, 5)
+closeBtn.BackgroundColor3 = Color3.fromRGB(120, 0, 0)
+closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+closeBtn.Text = "Close"
+closeBtn.TextScaled = true
+closeBtn.Font = Enum.Font.GothamBold
+closeBtn.Parent = panel
+
+----------------------------------------------------
+-- RGB SLIDERS
+----------------------------------------------------
+
+local function createSlider(name, yPos)
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, -20, 0, 20)
+    label.Position = UDim2.new(0, 10, 0, yPos)
+    label.BackgroundTransparency = 1
+    label.Text = name .. ": 0"
+    label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    label.Font = Enum.Font.GothamBold
+    label.TextScaled = true
+    label.Parent = panel
+
+    local bg = Instance.new("Frame")
+    bg.Size = UDim2.new(1, -20, 0, 10)
+    bg.Position = UDim2.new(0, 10, 0, yPos + 25)
+    bg.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+    bg.Parent = panel
+
+    local btn = Instance.new("Frame")
+    btn.Size = UDim2.new(0, 12, 0, 20)
+    btn.Position = UDim2.new(0, 0, -0.5, 5)
+    btn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    btn.Parent = bg
+
+    return label, bg, btn
+end
+
+local rLabel, rBg, rBtn = createSlider("Red", 60)
+local gLabel, gBg, gBtn = createSlider("Green", 120)
+local bLabel, bBg, bBtn = createSlider("Blue", 180)
+
+local UIS = game:GetService("UserInputService")
+local dragging = nil
+
+local function sliderLogic(btn, bg, label, colorIndex)
+    btn.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = {btn = btn, bg = bg, label = label, index = colorIndex}
+        end
+    end)
+end
+
+sliderLogic(rBtn, rBg, rLabel, 1)
+sliderLogic(gBtn, gBg, gLabel, 2)
+sliderLogic(bBtn, bBg, bLabel, 3)
+
+UIS.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = nil
+    end
+end)
+
+UIS.InputChanged:Connect(function(input)
+    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local mouseX = UIS:GetMouseLocation().X
+        local barPos = dragging.bg.AbsolutePosition.X
+        local barSize = dragging.bg.AbsoluteSize.X
+        local percent = math.clamp((mouseX - barPos) / barSize, 0, 1)
+
+        dragging.btn.Position = UDim2.new(percent, -6, -0.5, 5)
+        local value = math.floor(percent * 255)
+        dragging.label.Text = dragging.label.Text:split(":")[1] .. ": " .. value
+
+        local r = tonumber(rLabel.Text:split(": ")[2])
+        local g = tonumber(gLabel.Text:split(": ")[2])
+        local b = tonumber(bLabel.Text:split(": ")[2])
+
+        panelTitle.TextColor3 = Color3.fromRGB(r, g, b)
+    end
+end)
+
+----------------------------------------------------
+-- BUTTON LOGIC
+----------------------------------------------------
+
+openPanelBtn.MouseButton1Click:Connect(function()
+    panel.Visible = true
+end)
+
+closeBtn.MouseButton1Click:Connect(function()
+    panel.Visible = false
+end)
+
+----------------------------------------------------
+-- PASSWORD LOGIC
+----------------------------------------------------
+
+enterBtn.MouseButton1Click:Connect(function()
+    if box.Text == "Galaxy454" then
+        for i = 0, 1, 0.05 do
+            frame.BackgroundTransparency = i
+            title.TextTransparency = i
+            box.TextTransparency = i
+            enterBtn.TextTransparency = i
+            task.wait(0.03)
+        end
+        frame:Destroy()
+        openPanelBtn.Visible = true
+    else
+        wrong.Visible = true
+        task.wait(2)
+        wrong.Visible = false
+    end
+end)
