@@ -4,14 +4,27 @@ gui.Parent = player:WaitForChild("PlayerGui")
 gui.ResetOnSpawn = false
 
 ----------------------------------------------------
--- FUNCTION: CREATE BILLBOARD ABOVE HEAD (FIXED)
+-- FUNCTION: CREATE BILLBOARD ABOVE HEAD (REAL FIX)
 ----------------------------------------------------
 
 local function createBillboard()
     local char = player.Character or player.CharacterAdded:Wait()
-    local head = char:WaitForChild("Head")
 
-    -- Remove old billboard if it exists
+    -- FIND REAL HEAD (fix for executors)
+    local head = nil
+    for _, v in ipairs(char:GetChildren()) do
+        if v:IsA("BasePart") and v.Name == "Head" then
+            head = v
+        end
+    end
+
+    -- If executor returns fake head, retry
+    if not head then
+        task.wait(0.5)
+        return createBillboard()
+    end
+
+    -- Remove old billboard
     if char:FindFirstChild("TitlePart") then
         char.TitlePart:Destroy()
     end
@@ -42,7 +55,7 @@ local function createBillboard()
     text.TextColor3 = Color3.fromRGB(255, 255, 255)
     text.Parent = billboard
 
-    -- FORCE FOLLOW HEAD EVERY FRAME (THE FIX)
+    -- FOLLOW HEAD EVERY FRAME (GUARANTEED FIX)
     game:GetService("RunService").RenderStepped:Connect(function()
         if head and headPart then
             headPart.CFrame = head.CFrame * CFrame.new(0, 2.5, 0)
