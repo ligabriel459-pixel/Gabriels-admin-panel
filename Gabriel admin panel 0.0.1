@@ -1,50 +1,32 @@
--- ONE SCRIPT INSTALLER
--- Put this in ServerScriptService
+-- CLEAN LOCAL-ONLY ADMIN TITLE SYSTEM
+-- Works in ANY game, visible ONLY to you
 
-local rs = game:GetService("ReplicatedStorage")
-local sss = game:GetService("ServerScriptService")
-local sps = game:GetService("StarterPlayer").StarterPlayerScripts
-
-----------------------------------------------------
--- CREATE REMOTEEVENT
-----------------------------------------------------
-local event = rs:FindFirstChild("CreateTitle")
-if not event then
-    event = Instance.new("RemoteEvent")
-    event.Name = "CreateTitle"
-    event.Parent = rs
-end
+local player = game.Players.LocalPlayer
+local char = player.Character or player.CharacterAdded:Wait()
+local head = char:WaitForChild("Head")
+local UIS = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
 
 ----------------------------------------------------
--- CREATE SERVER BILLBOARD SCRIPT
+-- CREATE BILLBOARD ABOVE HEAD (LOCAL ONLY)
 ----------------------------------------------------
-local serverScript = Instance.new("Script")
-serverScript.Name = "TitleBillboard_Server"
 
-serverScript.Source = [[
-local rs = game:GetService("ReplicatedStorage")
-local event = rs:WaitForChild("CreateTitle")
-local runService = game:GetService("RunService")
-
-event.OnServerEvent:Connect(function(player, titleText, color)
-    local char = player.Character
-    if not char then return end
-
-    local head = char:FindFirstChild("Head")
-    if not head then return end
-
-    if char:FindFirstChild("ServerTitlePart") then
-        char.ServerTitlePart:Destroy()
+local function createLocalBillboard()
+    -- Remove old
+    if char:FindFirstChild("LocalTitlePart") then
+        char.LocalTitlePart:Destroy()
     end
 
+    -- Invisible part
     local part = Instance.new("Part")
-    part.Name = "ServerTitlePart"
+    part.Name = "LocalTitlePart"
     part.Size = Vector3.new(1,1,1)
     part.Transparency = 1
     part.CanCollide = false
     part.Anchored = true
     part.Parent = char
 
+    -- Billboard
     local billboard = Instance.new("BillboardGui")
     billboard.Size = UDim2.new(0, 200, 0, 50)
     billboard.AlwaysOnTop = true
@@ -56,146 +38,142 @@ event.OnServerEvent:Connect(function(player, titleText, color)
     text.BackgroundTransparency = 1
     text.TextScaled = true
     text.Font = Enum.Font.GothamBold
-    text.Text = titleText
-    text.TextColor3 = color
+    text.Text = "Admin Title"
+    text.TextColor3 = Color3.fromRGB(255,255,255)
     text.Parent = billboard
 
-    local conn
-    conn = runService.Heartbeat:Connect(function()
-        if not char.Parent or not head.Parent or not part.Parent then
-            conn:Disconnect()
-            return
+    -- Follow head
+    RunService.RenderStepped:Connect(function()
+        if head and part then
+            part.CFrame = head.CFrame * CFrame.new(0, 2.5, 0)
         end
-        part.CFrame = head.CFrame * CFrame.new(0, 2.5, 0)
     end)
+
+    return text
+end
+
+local billboardText = createLocalBillboard()
+
+player.CharacterAdded:Connect(function(newChar)
+    char = newChar
+    head = newChar:WaitForChild("Head")
+    billboardText = createLocalBillboard()
 end)
-]]
-
-serverScript.Parent = sss
 
 ----------------------------------------------------
--- CREATE LOCAL ADMIN PANEL SCRIPT
+-- GUI SETUP
 ----------------------------------------------------
-local localScript = Instance.new("LocalScript")
-localScript.Name = "AdminPanel_Client"
 
-localScript.Source = [[
-local player = game.Players.LocalPlayer
-local rs = game:GetService("ReplicatedStorage")
-local createTitleEvent = rs:WaitForChild("CreateTitle")
-local UIS = game:GetService("UserInputService")
-
-local gui = Instance.new("ScreenGui")
-gui.Parent = player:WaitForChild("PlayerGui")
+local gui = Instance.new("ScreenGui", player.PlayerGui)
 gui.ResetOnSpawn = false
 
-local frame = Instance.new("Frame")
+-- Key Frame
+local frame = Instance.new("Frame", gui)
 frame.Size = UDim2.new(0, 300, 0, 160)
 frame.Position = UDim2.new(0.5, -150, 0.5, -80)
-frame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-frame.Parent = gui
+frame.BackgroundColor3 = Color3.fromRGB(35,35,35)
 
-local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, 0, 0, 40)
+local title = Instance.new("TextLabel", frame)
+title.Size = UDim2.new(1,0,0,40)
 title.BackgroundTransparency = 1
 title.Text = "Enter admin key"
 title.TextScaled = true
-title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.TextColor3 = Color3.fromRGB(255,255,255)
 title.Font = Enum.Font.GothamBold
-title.Parent = frame
 
-local box = Instance.new("TextBox")
-box.Size = UDim2.new(1, -40, 0, 40)
-box.Position = UDim2.new(0, 20, 0, 50)
-box.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-box.TextColor3 = Color3.fromRGB(255, 255, 255)
+local box = Instance.new("TextBox", frame)
+box.Size = UDim2.new(1,-40,0,40)
+box.Position = UDim2.new(0,20,0,50)
+box.BackgroundColor3 = Color3.fromRGB(60,60,60)
+box.TextColor3 = Color3.fromRGB(255,255,255)
 box.PlaceholderText = "Enter key"
-box.Text = ""
 box.TextScaled = true
 box.Font = Enum.Font.Gotham
-box.Parent = frame
 
-local enterBtn = Instance.new("TextButton")
-enterBtn.Size = UDim2.new(1, -40, 0, 40)
-enterBtn.Position = UDim2.new(0, 20, 0, 100)
-enterBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
-enterBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+local enterBtn = Instance.new("TextButton", frame)
+enterBtn.Size = UDim2.new(1,-40,0,40)
+enterBtn.Position = UDim2.new(0,20,0,100)
+enterBtn.BackgroundColor3 = Color3.fromRGB(0,120,255)
+enterBtn.TextColor3 = Color3.fromRGB(255,255,255)
 enterBtn.Text = "Enter"
 enterBtn.TextScaled = true
 enterBtn.Font = Enum.Font.GothamBold
-enterBtn.Parent = frame
 
-local wrong = Instance.new("TextLabel")
-wrong.Size = UDim2.new(1, 0, 0, 30)
-wrong.Position = UDim2.new(0, 0, 1, 0)
+local wrong = Instance.new("TextLabel", frame)
+wrong.Size = UDim2.new(1,0,0,30)
+wrong.Position = UDim2.new(0,0,1,0)
 wrong.BackgroundTransparency = 1
 wrong.Text = "Wrong password"
 wrong.TextScaled = true
-wrong.TextColor3 = Color3.fromRGB(255, 0, 0)
+wrong.TextColor3 = Color3.fromRGB(255,0,0)
 wrong.Font = Enum.Font.GothamBold
 wrong.Visible = false
-wrong.Parent = frame
 
-local openPanelBtn = Instance.new("TextButton")
-openPanelBtn.Size = UDim2.new(0, 200, 0, 50)
-openPanelBtn.Position = UDim2.new(0.5, -100, 0.8, 0)
-openPanelBtn.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
-openPanelBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+----------------------------------------------------
+-- OPEN PANEL BUTTON
+----------------------------------------------------
+
+local openPanelBtn = Instance.new("TextButton", gui)
+openPanelBtn.Size = UDim2.new(0,200,0,50)
+openPanelBtn.Position = UDim2.new(0.5,-100,0.8,0)
+openPanelBtn.BackgroundColor3 = Color3.fromRGB(80,80,80)
+openPanelBtn.TextColor3 = Color3.fromRGB(255,255,255)
 openPanelBtn.Text = "Open Admin Panel"
 openPanelBtn.Font = Enum.Font.GothamBold
 openPanelBtn.TextScaled = true
 openPanelBtn.Visible = false
-openPanelBtn.Parent = gui
 
-local panel = Instance.new("Frame")
-panel.Size = UDim2.new(0, 300, 0, 250)
-panel.Position = UDim2.new(0.5, -150, 0.5, -125)
-panel.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+----------------------------------------------------
+-- ADMIN PANEL
+----------------------------------------------------
+
+local panel = Instance.new("Frame", gui)
+panel.Size = UDim2.new(0,300,0,250)
+panel.Position = UDim2.new(0.5,-150,0.5,-125)
+panel.BackgroundColor3 = Color3.fromRGB(40,40,40)
 panel.Visible = false
-panel.Parent = gui
 
-local panelTitle = Instance.new("TextBox")
-panelTitle.Size = UDim2.new(1, 0, 0, 40)
-panelTitle.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-panelTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+local panelTitle = Instance.new("TextBox", panel)
+panelTitle.Size = UDim2.new(1,0,0,40)
+panelTitle.BackgroundColor3 = Color3.fromRGB(30,30,30)
+panelTitle.TextColor3 = Color3.fromRGB(255,255,255)
 panelTitle.Text = "Admin Title"
 panelTitle.TextScaled = true
 panelTitle.Font = Enum.Font.GothamBold
 panelTitle.ClearTextOnFocus = false
-panelTitle.Parent = panel
 
-local closeBtn = Instance.new("TextButton")
-closeBtn.Size = UDim2.new(0, 80, 0, 30)
-closeBtn.Position = UDim2.new(1, -90, 0, 5)
-closeBtn.BackgroundColor3 = Color3.fromRGB(120, 0, 0)
-closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+local closeBtn = Instance.new("TextButton", panel)
+closeBtn.Size = UDim2.new(0,80,0,30)
+closeBtn.Position = UDim2.new(1,-90,0,5)
+closeBtn.BackgroundColor3 = Color3.fromRGB(120,0,0)
+closeBtn.TextColor3 = Color3.fromRGB(255,255,255)
 closeBtn.Text = "Close"
 closeBtn.TextScaled = true
 closeBtn.Font = Enum.Font.GothamBold
-closeBtn.Parent = panel
+
+----------------------------------------------------
+-- RGB SLIDERS
+----------------------------------------------------
 
 local function createSlider(name, yPos)
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(1, -20, 0, 20)
-    label.Position = UDim2.new(0, 10, 0, yPos)
+    local label = Instance.new("TextLabel", panel)
+    label.Size = UDim2.new(1,-20,0,20)
+    label.Position = UDim2.new(0,10,0,yPos)
     label.BackgroundTransparency = 1
     label.Text = name .. ": 0"
-    label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    label.TextColor3 = Color3.fromRGB(255,255,255)
     label.Font = Enum.Font.GothamBold
     label.TextScaled = true
-    label.Parent = panel
 
-    local bg = Instance.new("Frame")
-    bg.Size = UDim2.new(1, -20, 0, 10)
-    bg.Position = UDim2.new(0, 10, 0, yPos + 25)
-    bg.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
-    bg.Parent = panel
+    local bg = Instance.new("Frame", panel)
+    bg.Size = UDim2.new(1,-20,0,10)
+    bg.Position = UDim2.new(0,10,0,yPos+25)
+    bg.BackgroundColor3 = Color3.fromRGB(70,70,70)
 
-    local btn = Instance.new("Frame")
-    btn.Size = UDim2.new(0, 12, 0, 20)
-    btn.Position = UDim2.new(0, 0, -0.5, 5)
-    btn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    btn.Parent = bg
+    local btn = Instance.new("Frame", bg)
+    btn.Size = UDim2.new(0,12,0,20)
+    btn.Position = UDim2.new(0,0,-0.5,5)
+    btn.BackgroundColor3 = Color3.fromRGB(255,255,255)
 
     return label, bg, btn
 end
@@ -209,7 +187,7 @@ local dragging = nil
 local function sliderLogic(btn, bg, label)
     btn.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = {btn = btn, bg = bg, label = label}
+            dragging = {btn=btn, bg=bg, label=label}
         end
     end)
 end
@@ -239,15 +217,21 @@ UIS.InputChanged:Connect(function(input)
         local g = tonumber(gLabel.Text:split(": ")[2])
         local b = tonumber(bLabel.Text:split(": ")[2])
 
-        local color = Color3.fromRGB(r, g, b)
-
-        createTitleEvent:FireServer(panelTitle.Text, color)
+        billboardText.TextColor3 = Color3.fromRGB(r,g,b)
     end
 end)
 
+----------------------------------------------------
+-- LIVE TITLE UPDATE
+----------------------------------------------------
+
 panelTitle:GetPropertyChangedSignal("Text"):Connect(function()
-    createTitleEvent:FireServer(panelTitle.Text, panelTitle.TextColor3)
+    billboardText.Text = panelTitle.Text
 end)
+
+----------------------------------------------------
+-- BUTTON LOGIC
+----------------------------------------------------
 
 openPanelBtn.MouseButton1Click:Connect(function()
     panel.Visible = true
@@ -257,27 +241,17 @@ closeBtn.MouseButton1Click:Connect(function()
     panel.Visible = false
 end)
 
+----------------------------------------------------
+-- PASSWORD LOGIC
+----------------------------------------------------
+
 enterBtn.MouseButton1Click:Connect(function()
     if box.Text == "Galaxy454" then
-        for i = 0, 1, 0.05 do
-            frame.BackgroundTransparency = i
-            title.TextTransparency = i
-            box.TextTransparency = i
-            enterBtn.TextTransparency = i
-            task.wait(0.03)
-        end
         frame:Destroy()
         openPanelBtn.Visible = true
-
-        createTitleEvent:FireServer(panelTitle.Text, panelTitle.TextColor3)
     else
         wrong.Visible = true
         task.wait(2)
         wrong.Visible = false
     end
 end)
-]]
-
-localScript.Parent = sps
-
-print("Admin Panel + Billboard System Installed Successfully!")
